@@ -361,14 +361,18 @@ describe "BigFloat" do
     it { assert_prints Float64::MAX.to_big_f.to_s, "1.79769313486231570815e+308" }
     it { assert_prints Float64::MIN_POSITIVE.to_big_f.to_s, "2.22507385850720138309e-308" }
 
-    it { (2.to_big_f ** 7133786264).to_s.should end_with("e+2147483648") }  # least power of two with a base-10 exponent greater than Int32::MAX
-    it { (2.to_big_f ** -7133786264).to_s.should end_with("e-2147483649") } # least power of two with a base-10 exponent less than Int32::MIN
-    it { (10.to_big_f ** 3000000000 * 1.5).to_s.should end_with("e+3000000000") }
-    it { (10.to_big_f ** -3000000000 * 1.5).to_s.should end_with("e-3000000000") }
+    # GMP's `mp_exp_t` is a `long`, so these exponents don't fit on 32-bit
+    # platforms and GMP crashes trying to produce them.
+    {% unless flag?(:bits32) %}
+      it { (2.to_big_f ** 7133786264).to_s.should end_with("e+2147483648") }  # least power of two with a base-10 exponent greater than Int32::MAX
+      it { (2.to_big_f ** -7133786264).to_s.should end_with("e-2147483649") } # least power of two with a base-10 exponent less than Int32::MIN
+      it { (10.to_big_f ** 3000000000 * 1.5).to_s.should end_with("e+3000000000") }
+      it { (10.to_big_f ** -3000000000 * 1.5).to_s.should end_with("e-3000000000") }
 
-    {% unless flag?(:win32) && flag?(:gnu) %}
-      it { (10.to_big_f ** 10000000000 * 1.5).to_s.should end_with("e+10000000000") }
-      it { (10.to_big_f ** -10000000000 * 1.5).to_s.should end_with("e-10000000000") }
+      {% unless (flag?(:win32) && flag?(:gnu)) || flag?(:bits32) %}
+        it { (10.to_big_f ** 10000000000 * 1.5).to_s.should end_with("e+10000000000") }
+        it { (10.to_big_f ** -10000000000 * 1.5).to_s.should end_with("e-10000000000") }
+      {% end %}
     {% end %}
   end
 
@@ -577,7 +581,7 @@ describe "BigFloat Math" do
     Math.ilogb(123.45.to_big_f).should eq(6)
     Math.ilogb(2.to_big_f ** 1_000_000_000).should eq(1_000_000_000)
 
-    {% unless flag?(:win32) && flag?(:gnu) %}
+    {% unless (flag?(:win32) && flag?(:gnu)) || flag?(:bits32) %}
       Math.ilogb(2.to_big_f ** 100_000_000_000).should eq(100_000_000_000)
       Math.ilogb(2.to_big_f ** -100_000_000_000).should eq(-100_000_000_000)
     {% end %}
@@ -590,7 +594,7 @@ describe "BigFloat Math" do
     Math.logb(123.45.to_big_f).should eq(6.to_big_f)
     Math.logb(2.to_big_f ** 1_000_000_000).should eq(1_000_000_000.to_big_f)
 
-    {% unless flag?(:win32) && flag?(:gnu) %}
+    {% unless (flag?(:win32) && flag?(:gnu)) || flag?(:bits32) %}
       Math.logb(2.to_big_f ** 100_000_000_000).should eq(100_000_000_000.to_big_f)
       Math.logb(2.to_big_f ** -100_000_000_000).should eq(-100_000_000_000.to_big_f)
     {% end %}
@@ -603,7 +607,7 @@ describe "BigFloat Math" do
     Math.ldexp(0.2.to_big_f, -2).should eq(0.05.to_big_f)
     Math.ldexp(1.to_big_f, 1_000_000_000).should eq(2.to_big_f ** 1_000_000_000)
 
-    {% unless flag?(:win32) && flag?(:gnu) %}
+    {% unless (flag?(:win32) && flag?(:gnu)) || flag?(:bits32) %}
       Math.ldexp(1.to_big_f, 100_000_000_000).should eq(2.to_big_f ** 100_000_000_000)
       Math.ldexp(1.to_big_f, -100_000_000_000).should eq(0.5.to_big_f ** 100_000_000_000)
     {% end %}
@@ -614,7 +618,7 @@ describe "BigFloat Math" do
     Math.scalbn(0.2.to_big_f, -2).should eq(0.05.to_big_f)
     Math.scalbn(1.to_big_f, 1_000_000_000).should eq(2.to_big_f ** 1_000_000_000)
 
-    {% unless flag?(:win32) && flag?(:gnu) %}
+    {% unless (flag?(:win32) && flag?(:gnu)) || flag?(:bits32) %}
       Math.scalbn(1.to_big_f, 100_000_000_000).should eq(2.to_big_f ** 100_000_000_000)
       Math.scalbn(1.to_big_f, -100_000_000_000).should eq(0.5.to_big_f ** 100_000_000_000)
     {% end %}
@@ -625,7 +629,7 @@ describe "BigFloat Math" do
     Math.scalbln(0.2.to_big_f, -2).should eq(0.05.to_big_f)
     Math.scalbln(1.to_big_f, 1_000_000_000).should eq(2.to_big_f ** 1_000_000_000)
 
-    {% unless flag?(:win32) && flag?(:gnu) %}
+    {% unless (flag?(:win32) && flag?(:gnu)) || flag?(:bits32) %}
       Math.scalbln(1.to_big_f, 100_000_000_000).should eq(2.to_big_f ** 100_000_000_000)
       Math.scalbln(1.to_big_f, -100_000_000_000).should eq(0.5.to_big_f ** 100_000_000_000)
     {% end %}

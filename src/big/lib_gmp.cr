@@ -11,6 +11,11 @@
   {% end %}
 {% else %}
   @[Link("gmp")]
+  {% if flag?(:wasm32) %}
+    # gmp reports invalid operations with `raise(SIGFPE)`, which wasi-libc
+    # only provides through its signal emulation library.
+    @[Link("wasi-emulated-signal")]
+  {% end %}
 {% end %}
 lib LibGMP
   alias Int = LibC::Int
@@ -95,19 +100,19 @@ lib LibGMP
   fun addmul_ui = __gmpz_addmul_ui(rop : MPZ*, op1 : MPZ*, op2 : UI)
 
   fun fdiv_q = __gmpz_fdiv_q(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
-  fun fdiv_q_ui = __gmpz_fdiv_q_ui(rop : MPZ*, op1 : MPZ*, op2 : UI)
+  fun fdiv_q_ui = __gmpz_fdiv_q_ui(rop : MPZ*, op1 : MPZ*, op2 : UI) : UI
 
   fun tdiv_q = __gmpz_tdiv_q(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
-  fun tdiv_q_ui = __gmpz_tdiv_q_ui(rop : MPZ*, op1 : MPZ*, op2 : UI)
+  fun tdiv_q_ui = __gmpz_tdiv_q_ui(rop : MPZ*, op1 : MPZ*, op2 : UI) : UI
 
   fun fdiv_r = __gmpz_fdiv_r(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
-  fun fdiv_r_ui = __gmpz_fdiv_r_ui(rop : MPZ*, op1 : MPZ*, op2 : UI)
+  fun fdiv_r_ui = __gmpz_fdiv_r_ui(rop : MPZ*, op1 : MPZ*, op2 : UI) : UI
 
   fun fdiv_qr = __gmpz_fdiv_qr(q : MPZ*, r : MPZ*, n : MPZ*, d : MPZ*)
   fun fdiv_qr_ui = __gmpz_fdiv_qr_ui(q : MPZ*, r : MPZ*, n : MPZ*, d : UI) : UI
 
   fun tdiv_r = __gmpz_tdiv_r(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
-  fun tdiv_r_ui = __gmpz_tdiv_r_ui(rop : MPZ*, op1 : MPZ*, op2 : UI)
+  fun tdiv_r_ui = __gmpz_tdiv_r_ui(rop : MPZ*, op1 : MPZ*, op2 : UI) : UI
   fun tdiv_ui = __gmpz_tdiv_ui(op1 : MPZ*, op2 : UI) : UI
 
   fun tdiv_qr = __gmpz_tdiv_qr(q : MPZ*, r : MPZ*, n : MPZ*, d : MPZ*)

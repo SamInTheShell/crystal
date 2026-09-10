@@ -22,11 +22,13 @@ lib LibXML
 
   {% if (version = env("LIBXML_VERSION")) && (version.strip != "") %}
     VERSION = {{env("LIBXML_VERSION")}}
-  {% elsif flag?(:msvc) %}
+  {% elsif flag?(:msvc) || flag?(:wasm32) %}
+    # No pkg-config for these targets: look for a `libxml_VERSION` file next
+    # to the library instead (`scripts/wasm32/build-libs.sh` writes one).
     {% version = nil %}
-    {% for dir in Crystal::LIBRARY_PATH.split(Crystal::System::Process::HOST_PATH_DELIMITER) %}
+    {% for dir in Crystal::LIBRARY_PATH.split(host_flag?(:windows) ? ';' : ':') %}
       {% unless version %}
-        {% config_path = "#{dir.id}\\libxml_VERSION" %}
+        {% config_path = flag?(:msvc) ? "#{dir.id}\\libxml_VERSION" : "#{dir.id}/libxml_VERSION" %}
         {% if config_version = read_file?(config_path) %}
           {% version = config_version.chomp %}
         {% end %}
@@ -187,7 +189,14 @@ lib LibXML
   fun xmlXPathNodeSetAddUnique(cur : NodeSet*, val : Node*) : Int
   fun xmlNodeGetContent(node : Node*) : UInt8*
   fun xmlGetLineNo(node : Node*) : LibC::Long
-  fun xmlNodeSetContent(node : Node*, content : UInt8*)
+  {% if flag?(:wasm32) %}
+    # libxml2 >= 2.13 returns an error code. wasm-ld rejects calls whose
+    # signature doesn't match the callee exactly, so declare it faithfully
+    # for the (pinned, >= 2.13) library that the wasm32 target links against.
+    fun xmlNodeSetContent(node : Node*, content : UInt8*) : Int
+  {% else %}
+    fun xmlNodeSetContent(node : Node*, content : UInt8*)
+  {% end %}
   fun xmlNodeSetName(node : Node*, name : UInt8*)
   fun xmlUnlinkNode(node : Node*)
 
