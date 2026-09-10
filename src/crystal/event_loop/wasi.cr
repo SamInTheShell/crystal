@@ -34,7 +34,18 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
   end
 
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno | WinError
-    raise NotImplementedError.new("Crystal::Wasi::EventLoop#open")
+    path.check_no_null_byte
+
+    fd = LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
+    return Errno.value if fd == -1
+
+    # There is no way to wait for a regular file to become readable or
+    # writable in WASI (and `poll_oneoff` isn't wired into this event loop
+    # yet), so files default to blocking mode.
+    blocking = true if blocking.nil?
+
+    System::FileDescriptor.set_blocking(fd, false) unless blocking
+    {fd, !!blocking}
   end
 
   # TODO: LibWasi.fd_read
