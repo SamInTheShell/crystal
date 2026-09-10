@@ -667,12 +667,19 @@ module Math
 
   # :ditto:
   def scalbln(value : Float32, exp : Int64)
-    LibM.scalbln_f32(value, exp)
+    LibM.scalbln_f32(value, scalbln_exp(exp))
   end
 
   # :ditto:
   def scalbln(value : Float64, exp : Int64) : Float64
-    LibM.scalbln_f64(value, exp)
+    LibM.scalbln_f64(value, scalbln_exp(exp))
+  end
+
+  # `scalbln` takes a C `long`, which is narrower than `Int64` on 32-bit
+  # targets. Saturating the exponent is harmless: any magnitude beyond a few
+  # thousand already overflows or underflows the result.
+  private def scalbln_exp(exp : Int64) : LibC::Long
+    LibC::Long.new(exp.clamp(LibC::Long::MIN, LibC::Long::MAX))
   end
 
   # :ditto:

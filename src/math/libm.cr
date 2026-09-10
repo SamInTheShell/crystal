@@ -204,8 +204,8 @@ lib LibM
   fun logb_f64 = logb(value : Float64) : Float64
   fun nextafter_f32 = nextafterf(from : Float32, to : Float32) : Float32
   fun nextafter_f64 = nextafter(from : Float64, to : Float64) : Float64
-  fun scalbln_f32 = scalblnf(value1 : Float32, value2 : Int64) : Float32
-  fun scalbln_f64 = scalbln(value1 : Float64, value2 : Int64) : Float64
+  fun scalbln_f32 = scalblnf(value1 : Float32, value2 : LibC::Long) : Float32
+  fun scalbln_f64 = scalbln(value1 : Float64, value2 : LibC::Long) : Float64
   fun scalbn_f32 = scalbnf(value1 : Float32, value2 : Int32) : Float32
   fun scalbn_f64 = scalbn(value1 : Float64, value2 : Int32) : Float64
   fun sinh_f32 = sinhf(value : Float32) : Float32
