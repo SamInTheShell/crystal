@@ -21,7 +21,9 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
   end
 
   def sleep(duration : ::Time::Span) : Nil
-    raise NotImplementedError.new("Crystal::Wasi::EventLoop.sleep")
+    # Fibers can't be switched on wasm32 yet (see `Fiber#makecontext`), so
+    # there is nothing else to run while waiting: block the whole program.
+    Crystal::System::Thread.sleep(duration)
   end
 
   # Creates a timeout_event.
