@@ -45,10 +45,14 @@ jobs:
           rm wasm32-wasi-libs.tar.gz
 
       - name: Build spec/wasm32_std_spec.cr
-        run: bin/crystal build spec/wasm32_std_spec.cr -o wasm32_std_spec.wasm --target wasm32-wasi -Dwithout_iconv -Dwithout_openssl -Dwithout_zlib -Dwithout_mt
+        # The libs tarball only ships wasi-libc and pcre2; the `without_*` flags
+        # skip the specs that need zlib, gmp, libyaml or libxml2 (see
+        # scripts/wasm32/build-libs.sh for building those).
+        run: bin/crystal build spec/wasm32_std_spec.cr -o wasm32_std_spec.wasm --target wasm32-wasi -Dwithout_iconv -Dwithout_openssl -Dwithout_zlib -Dwithout_gmp -Dwithout_yaml -Dwithout_libxml2 -Dwithout_mt
         env:
           CRYSTAL_LIBRARY_PATH: ${{ github.workspace }}/wasm32-wasi-libs
 
       - name: Run wasm32_std_spec.wasm
         run: |
-          wasmtime run wasm32_std_spec.wasm
+          # Some specs read fixtures from spec/std/data
+          wasmtime run --dir . wasm32_std_spec.wasm
