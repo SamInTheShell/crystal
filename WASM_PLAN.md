@@ -16,7 +16,7 @@ Read this at the start of every session, update it at the end. Branch:
 
 Reference build command (CI):
 
-```
+```text
 bin/crystal build spec/wasm32_std_spec.cr -o wasm32_std_spec.wasm --target wasm32-wasi \
   -Dwithout_iconv -Dwithout_openssl -Dwithout_zlib -Dwithout_mt
 wasmtime run wasm32_std_spec.wasm
@@ -24,7 +24,7 @@ wasmtime run wasm32_std_spec.wasm
 
 Local "everything" build (needs libs built by `scripts/wasm32/build-libs.sh --prefix DIR`):
 
-```
+```text
 CRYSTAL_LIBRARY_PATH=/opt/wasm32-wasi-libs:DIR/lib bin/crystal build spec/wasm32_std_spec.cr \
   -o out.wasm --target wasm32-wasi -Dwithout_iconv -Dwithout_openssl -Dwithout_mt
 wasmtime run --dir . out.wasm        # from the repo root; specs read spec/std/data
@@ -32,16 +32,16 @@ wasmtime run --dir . out.wasm        # from the repo root; specs read spec/std/d
 
 ### Gotchas
 
-* `CRYSTAL_LIBRARY_PATH=/opt/wasm32-wasi-libs` is exported globally in the
+- `CRYSTAL_LIBRARY_PATH=/opt/wasm32-wasi-libs` is exported globally in the
   container. Native builds (`make crystal`, native `bin/crystal spec`) pick
   up the wasm `libgc.a` and fail to link. Prefix them with
   `env -u CRYSTAL_LIBRARY_PATH`.
-* The same problem hits **macro `run`** during a wasm build: the macro
+- The same problem hits **macro `run`** during a wasm build: the macro
   program is compiled natively but links with `-L$CRYSTAL_LIBRARY_PATH`,
   finds the wasm `libgc.a`, and fails. This breaks every spec that uses ECR
   (`spec/std/http/spec_helper.cr`) under cross-compilation. Needs a compiler
   fix or a documented workaround; see open questions.
-* The repo was root-owned; `sudo chown -R dev:dev /work/crystal` was needed.
+- The repo was root-owned; `sudo chown -R dev:dev /work/crystal` was needed.
 
 ## Progress metric: `spec/wasm32_std_spec.cr`
 
@@ -58,15 +58,15 @@ built by `scripts/wasm32/build-libs.sh` pass none.
 
 Last full-harness runs on this branch (0 failures in both):
 
-* CI mode (all `without_*` flags, CI tarball libs): 11145 examples.
-* Full mode (local libs, no `without_*`, `wasmtime run --dir .`): 13110 examples.
+- CI mode (all `without_*` flags, CI tarball libs): 11145 examples.
+- Full mode (local libs, no `without_*`, `wasmtime run --dir .`): 13110 examples.
 
 ### Sweep results (2026-09-10, after the fixes below, old CI tarball libc + local zlib)
 
 All 164 originally disabled specs and 41 specs that were never listed were
 rebuilt and run individually. Classification:
 
-* **PASS (49)**: `string_spec` (1062 examples!), `char_spec`, all
+- **PASS (49)**: `string_spec` (1062 examples!), `char_spec`, all
   `compress/*`, `digest/adler32|crc32`, `crystal/digest/*`, `env`, `errno`,
   `http/client/response`, `http/cookie(s)`, `http/formdata/builder`,
   `http/status`, `ini`, `io/argf|buffered|multi_writer|prefix_suffix_buffer`,
@@ -77,59 +77,59 @@ rebuilt and run individually. Classification:
   `uri/json`, `uri/params/*`, `math_spec` (after scalbln fix),
   `time/format|location|time`, `benchmark`, `time/instant` (after sleep).
   All enabled in the harness.
-* **Link failures**: gmp (12 specs), libyaml (10), libxml2 (7) → fixed by
+- **Link failures**: gmp (12 specs), libyaml (10), libxml2 (7) → fixed by
   `scripts/wasm32/build-libs.sh`; 23 of those 29 pass now (enabled behind
   flag guards), the other 6 are `expect_raises` (EH) or `System.hostname`
   (junit formatter; no WASI API). `llvm/*` need libLLVM: out of scope.
-* **Codegen failures**:
-  * `expect_raises` returns `Nil` because `raise` is `NoReturn`/exit on
+- **Codegen failures**:
+  - `expect_raises` returns `Nil` because `raise` is `NoReturn`/exit on
     wasm32 → "undefined method 'os_error' for Nil" etc. (~10 specs). **EH,
     workstream 4a.**
-  * `without_openssl` (12 specs): expected, stay disabled.
-  * `Process.spawn`/`prepare_args` (9 specs): no processes in WASI.
-  * `Thread#init_handle` (3): no threads.
-  * `Signal::INT` (`process/status_spec`): no signals.
-  * ECR macro `run` (7 `http/server/*` specs): the gotcha above.
-* **Run failures**:
-  * `FATAL: can't resume a running fiber` — channel, concurrent, select,
+  - `without_openssl` (12 specs): expected, stay disabled.
+  - `Process.spawn`/`prepare_args` (9 specs): no processes in WASI.
+  - `Thread#init_handle` (3): no threads.
+  - `Signal::INT` (`process/status_spec`): no signals.
+  - ECR macro `run` (7 `http/server/*` specs): the gotcha above.
+- **Run failures**:
+  - `FATAL: can't resume a running fiber` — channel, concurrent, select,
     mutex, sync/*, crystal/lock, fd_lock, wait_group, log/context:
     **fibers, 4b.**
-  * `create_timeout_event` NotImplemented (fiber_spec, wait_group): 4b/3.
-  * `Expected 0 to be GreaterThan 0` (object, reference, weak_ref,
+  - `create_timeout_event` NotImplemented (fiber_spec, wait_group): 4b/3.
+  - `Expected 0 to be GreaterThan 0` (object, reference, weak_ref,
     log/builder): `GC.stats` with `gc_none`: **GC, 4c.**
-  * `EventLoop::Wasi#pipe` (io/hexdump, io/stapled): WASI p1 has no pipes.
-  * `File.chmod` (process/find_executable), User/Group lookups: no WASI API.
-  * `io/memory_spec`: allocates `Int32::MAX` bytes and expects a raise → EH.
-  * `json/pull_parser_spec`: `OverflowError` expected by spec → EH.
-  * `file/tempfile_spec`: expects POSIX permission bits, WASI returns none.
+  - `EventLoop::Wasi#pipe` (io/hexdump, io/stapled): WASI p1 has no pipes.
+  - `File.chmod` (process/find_executable), User/Group lookups: no WASI API.
+  - `io/memory_spec`: allocates `Int32::MAX` bytes and expects a raise → EH.
+  - `json/pull_parser_spec`: `OverflowError` expected by spec → EH.
+  - `file/tempfile_spec`: expects POSIX permission bits, WASI returns none.
     Needs `pending_wasm32` in the spec.
-  * `crystal/system_spec` `%p` with `UInt64::MAX`: 32-bit pointer, spec
+  - `crystal/system_spec` `%p` with `UInt64::MAX`: 32-bit pointer, spec
     assumes 64-bit.
-  * `http/chunked_content_spec`, `log/dispatch`, `log/io_backend`,
+  - `http/chunked_content_spec`, `log/dispatch`, `log/io_backend`,
     `sync/mutex`: not yet analysed (likely fibers or EH).
 
 ## Workstream status
 
 ### 1. Linking failures — done for zlib/gmp/libyaml/libxml2; tarball decision pending
 
-* `scripts/wasm32/build-libs.sh` cross-builds **zlib 1.3.1, gmp 6.3.0,
+- `scripts/wasm32/build-libs.sh` cross-builds **zlib 1.3.1, gmp 6.3.0,
   libyaml 0.2.5, libxml2 2.13.8** with wasi-sdk (pinned SHA-256s, output in
   `PREFIX/lib`). Recipes notes: gmp needs `-D_WASI_EMULATED_SIGNAL` +
   `ac_cv_func_raise=yes` (and `LibGMP` links `wasi-emulated-signal` on
   wasm32); libyaml needs wasi-sdk's `config.sub`; libxml2 needs a `dup()`
   shim (no `dup` in WASI).
-* Binding fixes found by wasm-ld signature checks (wasm enforces exact
+- Binding fixes found by wasm-ld signature checks (wasm enforces exact
   signatures, native ABIs silently tolerate these):
   `LibZ.adler32_combine/crc32_combine` (`z_off_t` is 64-bit on wasi),
   `LibM.scalbln` (`long` is 32-bit), `LibGMP.*div_*_ui` (return `unsigned
   long`, were declared void).
-* Library specs enabled behind `without_zlib`/`without_gmp`/`without_yaml`/
+- Library specs enabled behind `without_zlib`/`without_gmp`/`without_yaml`/
   `without_libxml2` guards; CI passes all four (old tarball) and stays green.
-* `LibXML::VERSION` on wasm32 is read from `lib/libxml_VERSION` (written by
+- `LibXML::VERSION` on wasm32 is read from `lib/libxml_VERSION` (written by
   the script) because the host's pkg-config reported 2.9.14 and the binding
   then used the wrong (pre-2.13) error-handling API against 2.13.8.
-* **Not done**: pcre2 and bdwgc recipes (so the script can produce the
-  *whole* library dir, replacing lbguilherme's tarball). pcre2 10.45 builds
+- **Not done**: pcre2 and bdwgc recipes (so the script can produce the
+  _whole_ library dir, replacing lbguilherme's tarball). pcre2 10.45 builds
   fine with autotools (`--disable-jit`). bdwgc 8.2.x has no WASI support
   (only Emscripten); master does. lbguilherme/wasm-libs has `libs/libgc/
   build.sh` to crib from.
@@ -168,7 +168,7 @@ LLVM 18 clang.
 | LLVM 18 `-fwasm-exceptions` | emits this (only option; no `-wasm-use-legacy-eh=false` yet) | not available before LLVM 19/20 |
 | wasmtime 48 (`-W exceptions`) | rejected (`legacy_exceptions feature required`) | runs |
 | node 22 / V8 | runs | runs (also with `--experimental-wasm-exnref`) |
-| `wasm-opt --translate-to-exnref` | converts legacy → exnref; the *asyncified* legacy module translated this way runs correctly in node | |
+| `wasm-opt --translate-to-exnref` | converts legacy → exnref; the _asyncified_ legacy module translated this way runs correctly in node | |
 
 Conclusion: **native wasm EH and Asyncify do compose**, but only in this
 order: LLVM emits legacy EH → `wasm-opt --asyncify` → (optionally)
@@ -222,42 +222,42 @@ CONTRIBUTING.md, forum threads 4522/4709/5132, `.github/workflows/*`.
 
 What the maintainers have said, condensed:
 
-* **Gatekeepers**: straight-shoota (compiler/CI), ysbaddaden (runtime,
+- **Gatekeepers**: straight-shoota (compiler/CI), ysbaddaden (runtime,
   fibers, event loop; owns the 2025-26 WASI event-loop refactors),
   HertzDevil (codegen). Two Core Team approvals per PR. All prior wasm work
   is lbguilherme's and has been unmaintained since 2023.
-* **Tooling**: requiring `wasm-opt` on the host for wasm builds is fine;
-  *shipping* it in Crystal packages is not ("we don't ship linkers ... for
+- **Tooling**: requiring `wasm-opt` on the host for wasm builds is fine;
+  _shipping_ it in Crystal packages is not ("we don't ship linkers ... for
   native toolchains either", #11931). #13107 shelled out to `wasm-opt` from
   `compiler.cr` and was approved.
-* **Exceptions** (#13130): 2023 leaned to an Asyncify-based rewrite because
+- **Exceptions** (#13130): 2023 leaned to an Asyncify-based rewrite because
   LLVM wasm EH was unusable then. Since 2025 the sentiment is native EH:
   HertzDevil points at LLVM 20's standardized EH, ysbaddaden researched
   Rust's approach (personality shim + `llvm.wasm.throw`), straight-shoota
   notes WASM 3.0 ships EH. Nobody wants setjmp-style.
-* **Fibers**: Asyncify is the accepted approach (#13107). Nobody asked to
+- **Fibers**: Asyncify is the accepted approach (#13107). Nobody asked to
   wait for stack switching / JSPI.
-* **GC**: roadmap assumed Boehm + Asyncify; ysbaddaden has floated a small
+- **GC**: roadmap assumed Boehm + Asyncify; ysbaddaden has floated a small
   native mark & sweep GC "since there's no concurrency". Wasm-GC (typed
   structs) has no maintainer support.
-* **Browser / JS interop**: belongs in shards (crystal-js), not the
+- **Browser / JS interop**: belongs in shards (crystal-js), not the
   compiler or stdlib. Export/import mechanism is settled: top-level `fun`
   are exported, `@[Link(wasm_import_module:)]` imports.
-* **Prebuilt libs**: upstream does not want more package maintainership.
-  Windows precedent: third-party libs are built *in CI* from pinned
+- **Prebuilt libs**: upstream does not want more package maintainership.
+  Windows precedent: third-party libs are built _in CI_ from pinned
   versions (`etc/win-ci/*.ps1`, `win_build_libs.yml`) and stored with
   `actions/cache`, never hosted as release assets.
-* **LLVM**: floor is 8, CI tests 13-22, wasm CI pins 18. A feature that
+- **LLVM**: floor is 8, CI tests 13-22, wasm CI pins 18. A feature that
   needs a newer LLVM must be gated, not required.
-* **PR shape**: small, focused, issue first, no long-running platform
+- **PR shape**: small, focused, issue first, no long-running platform
   branch (maxfierke on #10870), stubs carry `NotImplementedError`, enable
   every spec that passes in the same PR, no force-push, merge master not
   rebase, `crystal tool format`.
-* **What users ask for**: serverless/edge functions (Shopify, Cloudflare,
+- **What users ask for**: serverless/edge functions (Shopify, Cloudflare,
   Fermyon), plugins, calling Crystal from Ruby/Node/Python, browser apps.
   Community mood is "another abandoned wasm effort"; a working, CI-tested
   slice is what changes that.
-* **`wasm32-wasip1`**: never discussed upstream.
+- **`wasm32-wasip1`**: never discussed upstream.
 
 ## Parity target: what Go and C++ have that Crystal on wasm lacks
 
@@ -335,7 +335,7 @@ exactly as for Go.
    `--target wasm32-wasip1` works without a rename. Raise an upstream
    issue; do not rename.
 9. **Macro `run` under cross-compilation**: `codegen/link.cr:106` reads
-   `CRYSTAL_LIBRARY_PATH` for *both* the target link and the host-side
+   `CRYSTAL_LIBRARY_PATH` for _both_ the target link and the host-side
    macro program. Fix: macro-run compilation ignores `CRYSTAL_LIBRARY_PATH`
    when the target differs from the host (falls back to
    `Crystal::Config.library_path`). Gated on cross-compilation only.
