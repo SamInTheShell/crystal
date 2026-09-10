@@ -33,10 +33,22 @@ LIBXML2_SHA256=277294cb33119ab71b2bc81f2f445e9bc9435b893ad15bb2cd2b0e859a0ee84a
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --prefix) PREFIX="$2"; shift 2 ;;
-    --jobs)   JOBS="$2"; shift 2 ;;
-    -h|--help) sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-    --*) echo "unknown option: $1" >&2; exit 1 ;;
+    --prefix)
+      PREFIX="$2"
+      shift 2
+      ;;
+    --jobs)
+      JOBS="$2"
+      shift 2
+      ;;
+    -h | --help)
+      sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'
+      exit 0
+      ;;
+    --*)
+      echo "unknown option: $1" >&2
+      exit 1
+      ;;
     *) break ;;
   esac
 done
@@ -192,7 +204,7 @@ void **__xmlStructuredErrorContext(void) { return &xmlStructuredErrorContext; }
 int *__xmlIndentTreeOutput(void) { return &xmlIndentTreeOutput; }
 const char **__xmlTreeIndentString(void) { return &xmlTreeIndentString; }
 C
-    $CC $CFLAGS -Iinclude -c wasi-globals.c -o wasi-globals.o
+    $CC $CFLAGS -I include -c wasi-globals.c -o wasi-globals.o
     $AR rcs "$PREFIX/lib/libxml2.a" wasi-globals.o
     # There is no pkg-config for the target: Crystal's LibXML binding reads
     # the version from this file (next to the archive) on wasm32.
@@ -207,7 +219,10 @@ for lib in "${LIBS[@]}"; do
     gmp) build_gmp ;;
     libyaml) build_libyaml ;;
     libxml2) build_libxml2 ;;
-    *) echo "unknown library: $lib (supported: zlib gmp libyaml libxml2)" >&2; exit 1 ;;
+    *)
+      echo "unknown library: $lib (supported: zlib gmp libyaml libxml2)" >&2
+      exit 1
+      ;;
   esac
 done
 
