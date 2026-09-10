@@ -20,13 +20,27 @@ require "./std/class_spec.cr"
 require "./std/colorize_spec.cr"
 require "./std/comparable_spec.cr"
 require "./std/complex_spec.cr"
-# require "./std/compress/deflate/deflate_spec.cr" (failed linking)
-# require "./std/compress/gzip/gzip_spec.cr" (failed linking)
-# require "./std/compress/zip/zip_file_spec.cr" (failed linking)
-# require "./std/compress/zip/zip_spec.cr" (failed linking)
-# require "./std/compress/zlib/reader_spec.cr" (failed linking)
-# require "./std/compress/zlib/stress_spec.cr" (failed linking)
-# require "./std/compress/zlib/writer_spec.cr" (failed linking)
+{% unless flag?(:without_zlib) %}
+  require "./std/compress/deflate/deflate_spec.cr"
+{% end %}
+{% unless flag?(:without_zlib) %}
+  require "./std/compress/gzip/gzip_spec.cr"
+{% end %}
+{% unless flag?(:without_zlib) %}
+  require "./std/compress/zip/zip_file_spec.cr"
+{% end %}
+{% unless flag?(:without_zlib) %}
+  require "./std/compress/zip/zip_spec.cr"
+{% end %}
+{% unless flag?(:without_zlib) %}
+  require "./std/compress/zlib/reader_spec.cr"
+{% end %}
+{% unless flag?(:without_zlib) %}
+  require "./std/compress/zlib/stress_spec.cr"
+{% end %}
+{% unless flag?(:without_zlib) %}
+  require "./std/compress/zlib/writer_spec.cr"
+{% end %}
 # require "./std/concurrent/select_spec.cr" (failed to run)
 # require "./std/concurrent_spec.cr" (failed to run)
 require "./std/crypto/bcrypt/base64_spec.cr"
@@ -57,8 +71,12 @@ require "./std/csv/csv_lex_spec.cr"
 require "./std/csv/csv_parse_spec.cr"
 require "./std/csv/csv_spec.cr"
 require "./std/deque_spec.cr"
-# require "./std/digest/adler32_spec.cr" (failed linking)
-# require "./std/digest/crc32_spec.cr" (failed linking)
+{% unless flag?(:without_zlib) %}
+  require "./std/digest/adler32_spec.cr"
+{% end %}
+{% unless flag?(:without_zlib) %}
+  require "./std/digest/crc32_spec.cr"
+{% end %}
 # require "./std/digest/io_digest_spec.cr" (failed linking)
 # require "./std/digest/md5_spec.cr" (failed linking)
 # require "./std/digest/sha1_spec.cr" (failed linking)

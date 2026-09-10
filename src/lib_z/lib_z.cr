@@ -17,11 +17,20 @@ lib LibZ
 
   alias Bytef = UInt8
 
+  # `z_off_t` is `long` by default, but zlib's `configure` redefines it as
+  # `off_t` on platforms with `unistd.h`. On wasm32-wasi `off_t` is 64-bit
+  # while `long` is 32-bit, so the two must not be conflated there.
+  {% if flag?(:wasm32) %}
+    alias OffT = LibC::OffT
+  {% else %}
+    alias OffT = Long
+  {% end %}
+
   fun zlibVersion : Char*
   fun adler32(adler : ULong, buf : Bytef*, len : UInt) : ULong
-  fun adler32_combine(adler1 : ULong, adler2 : ULong, len : Long) : ULong
+  fun adler32_combine(adler1 : ULong, adler2 : ULong, len : OffT) : ULong
   fun crc32(crc : ULong, buf : Bytef*, len : UInt) : ULong
-  fun crc32_combine(crc1 : ULong, crc2 : ULong, len : Long) : ULong
+  fun crc32_combine(crc1 : ULong, crc2 : ULong, len : OffT) : ULong
 
   alias AllocFunc = Void*, UInt, UInt -> Void*
   alias FreeFunc = (Void*, Void*) ->
