@@ -16,11 +16,18 @@ module Crystal::System::FileDescriptor
   end
 
   def self.get_blocking(fd : Handle)
-    raise NotImplementedError.new("Crystal::System::FileDescriptor.get_blocking")
+    fcntl(fd, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
   end
 
   def self.set_blocking(fd : Handle, value : Bool)
-    raise NotImplementedError.new("Crystal::System::FileDescriptor.set_blocking")
+    current_flags = fcntl(fd, LibC::F_GETFL)
+    new_flags = current_flags
+    if value
+      new_flags &= ~LibC::O_NONBLOCK
+    else
+      new_flags |= LibC::O_NONBLOCK
+    end
+    fcntl(fd, LibC::F_SETFL, new_flags) unless new_flags == current_flags
   end
 
   protected def system_blocking_init(blocking : Bool?)

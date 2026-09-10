@@ -22,10 +22,23 @@ module Crystal::System::File
   end
 
   def self.utime(atime : ::Time, mtime : ::Time, filename : String) : Nil
-    raise NotImplementedError.new "Crystal::System::File.utime"
+    timespecs = uninitialized LibC::Timespec[2]
+    timespecs[0] = Crystal::System::Time.to_timespec(atime)
+    timespecs[1] = Crystal::System::Time.to_timespec(mtime)
+
+    if LibC.utimensat(LibC::AT_FDCWD, filename, timespecs, 0) != 0
+      raise ::File::Error.from_errno("Error setting time on file", file: filename)
+    end
   end
 
   def self.delete(path : String, *, raise_on_missing : Bool) : Bool
-    raise NotImplementedError.new "Crystal::System::File.delete"
+    err = LibC.unlink(path.check_no_null_byte)
+    if err != -1
+      true
+    elsif !raise_on_missing && ::File::NotFoundError.os_error?(Errno.value)
+      false
+    else
+      raise ::File::Error.from_errno("Error deleting file", file: path)
+    end
   end
 end

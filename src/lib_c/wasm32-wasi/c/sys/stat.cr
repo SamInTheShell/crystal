@@ -46,7 +46,9 @@ lib LibC
 
   fun fchmod(fd : Int, mode : ModeT) : Int
   fun fstat(x0 : Int, x1 : Stat*) : Int
+  fun futimens(fd : Int, times : Timespec[2]) : Int
   fun lstat(x0 : Char*, x1 : Stat*) : Int
   fun mkdir(x0 : Char*, x1 : ModeT) : Int
   fun stat(x0 : Char*, x1 : Stat*) : Int
+  fun utimensat(fd : Int, path : Char*, times : Timespec[2], flag : Int) : Int
 end
