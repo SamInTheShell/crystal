@@ -101,11 +101,11 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     file_descriptor.file_descriptor_close
   end
 
-  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol) : {::Socket::Handle, Bool}
+  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool?) : {::Socket::Handle, Bool}
     raise NotImplementedError.new("Crystal::EventLoop::Wasi#socket")
   end
 
-  def socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : {Handle, Handle}
+  def socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : Tuple({::Socket::Handle, ::Socket::Handle}, Bool)
     raise NotImplementedError.new("Crystal::EventLoop::Wasi#socketpair")
   end
 
@@ -148,8 +148,12 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
   end
 
   # TODO: LibWasi.sock_accept
-  def accept(socket : ::Socket) : ::Socket::Handle?
+  def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
     raise NotImplementedError.new "Crystal::Wasi::EventLoop#accept"
+  end
+
+  def sendfile(socket : ::Socket, fd : System::FileDescriptor::Handle, offset : Int64, count : Int64, flags : Int32) : Int64 | Errno | WinError
+    raise NotImplementedError.new "Crystal::Wasi::EventLoop#sendfile"
   end
 
   def shutdown(socket : ::Socket) : Nil

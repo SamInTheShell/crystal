@@ -2,6 +2,12 @@ module Crystal::System::Addrinfo
   alias Handle = NoReturn
 
   protected def initialize(addrinfo : Handle)
+    # Unreachable (`Handle` is `NoReturn`), but the compiler requires every
+    # instance variable to be initialized in every constructor.
+    @family = ::Socket::Family::UNSPEC
+    @type = ::Socket::Type::STREAM
+    @protocol = ::Socket::Protocol::IP
+    @size = 0
     raise NotImplementedError.new("Crystal::System::Addrinfo#initialize")
   end
 
